@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "removeComments": true,
+    "module": "CommonJS",
+    "target": "ES6",
+    "baseUrl": "./",
+    "esModuleInterop": true,
+    "moduleResolution": "node"
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules/**/*"]
+}

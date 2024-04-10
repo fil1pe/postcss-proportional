@@ -1,0 +1,44 @@
+{
+  "name": "postcss-proportional",
+  "version": "0.1.0",
+  "description": "PostCSS plugin to make layouts responsively proportional",
+  "keywords": [
+    "postcss",
+    "css",
+    "postcss-plugin",
+    "responsive",
+    "proportional"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "unit": "node --test index.test.js",
+    "test": "npm run unit && eslint ."
+  },
+  "author": "Filipe Ramos <ik.ben.filipe@gmail.com>",
+  "license": "MIT",
+  "repository": "https://github.com/fil1pe/postcss-proportional",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "postcss": "^8.4.27"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "eslint": "^8.47.0",
+    "postcss": "^8.4.27",
+    "typescript": "^5.4.4"
+  },
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 2017
+    },
+    "env": {
+      "node": true,
+      "es6": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ]
+  }
+}
