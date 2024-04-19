@@ -112,7 +112,11 @@ const plugin: () => Plugin | Processor = () => {
 
           firstIndex = i + 1
           intervals.splice(0, intervals.length)
-        } else if (rootNodes[i].type === 'atrule') intervals.push(i)
+        } else if (
+          rootNodes[i].type === 'atrule' &&
+          (rootNodes[i] as AtRule).name === 'media'
+        )
+          intervals.push(i)
       }
     },
   }

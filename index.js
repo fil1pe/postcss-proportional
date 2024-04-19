@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function proportionalRule(rule, rootNodes, firstIndex, lastIndex) {
+function processProportionalRule(rule, rootNodes, firstIndex, lastIndex) {
     let scale = 1;
     for (const node of rule.nodes)
         if (node.type === 'decl' && node.prop === 'scale')
@@ -55,7 +55,7 @@ const plugin = () => {
                     for (const interval of intervals) {
                         let nodeCloned = rootNodes[i].clone();
                         rootNodes[i].before(nodeCloned);
-                        proportionalRule((nodeCloned.type === 'atrule'
+                        processProportionalRule((nodeCloned.type === 'atrule'
                             ? nodeCloned.nodes.findLast(({ selector }) => selector === 'proportional')
                             : nodeCloned), rootNodes, firstIndex, interval);
                         nodeCloned = node.clone();
@@ -66,17 +66,18 @@ const plugin = () => {
                         });
                         newAtrule.append(nodeCloned);
                         rootNodes[i].before(newAtrule);
-                        proportionalRule(nodeCloned, atrule.nodes, 0, atrule.nodes.length);
+                        processProportionalRule(nodeCloned, atrule.nodes, 0, atrule.nodes.length);
                         firstIndex = interval + 1;
                     }
-                    proportionalRule(node, rootNodes, firstIndex, i);
+                    processProportionalRule(node, rootNodes, firstIndex, i);
                     if (rootNodes[i].type === 'atrule' &&
                         !rootNodes[i].nodes.length)
                         rootNodes[i].remove();
                     firstIndex = i + 1;
                     intervals.splice(0, intervals.length);
                 }
-                else if (rootNodes[i].type === 'atrule')
+                else if (rootNodes[i].type === 'atrule' &&
+                    rootNodes[i].name === 'media')
                     intervals.push(i);
             }
         },
