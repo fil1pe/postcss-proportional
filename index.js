@@ -46,11 +46,16 @@ const plugin = () => {
             const rootNodes = [...root.nodes];
             const intervals = [];
             let firstIndex = 0;
+            let firstIndexTmp = -1;
             for (let i = 0; i < rootNodes.length; i++) {
                 let node = rootNodes[i];
                 if (node.type === 'atrule')
                     node = node.nodes.findLast(({ selector }) => selector === 'proportional');
                 if (node && node.type === 'rule' && node.selector === 'proportional') {
+                    if (firstIndexTmp !== -1)
+                        firstIndex = firstIndexTmp;
+                    else
+                        firstIndexTmp = firstIndex;
                     const params = rootNodes[i].type === 'atrule' && rootNodes[i].params;
                     for (const interval of intervals) {
                         let nodeCloned = rootNodes[i].clone();
@@ -77,8 +82,12 @@ const plugin = () => {
                     intervals.splice(0, intervals.length);
                 }
                 else if (rootNodes[i].type === 'atrule' &&
-                    rootNodes[i].name === 'media')
+                    rootNodes[i].name === 'media') {
+                    firstIndexTmp = -1;
                     intervals.push(i);
+                }
+                else
+                    firstIndexTmp = -1;
             }
         },
     };

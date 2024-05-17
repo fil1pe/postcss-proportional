@@ -61,6 +61,7 @@ const plugin: () => Plugin | Processor = () => {
       const intervals: number[] = []
 
       let firstIndex = 0
+      let firstIndexTmp = -1
       for (let i = 0; i < rootNodes.length; i++) {
         let node = rootNodes[i]
         if (node.type === 'atrule')
@@ -69,6 +70,9 @@ const plugin: () => Plugin | Processor = () => {
           )
 
         if (node && node.type === 'rule' && node.selector === 'proportional') {
+          if (firstIndexTmp !== -1) firstIndex = firstIndexTmp
+          else firstIndexTmp = firstIndex
+
           const params =
             rootNodes[i].type === 'atrule' && (rootNodes[i] as AtRule).params
 
@@ -115,8 +119,10 @@ const plugin: () => Plugin | Processor = () => {
         } else if (
           rootNodes[i].type === 'atrule' &&
           (rootNodes[i] as AtRule).name === 'media'
-        )
+        ) {
+          firstIndexTmp = -1
           intervals.push(i)
+        } else firstIndexTmp = -1
       }
     },
   }
