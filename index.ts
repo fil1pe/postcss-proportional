@@ -1,5 +1,18 @@
 import { AtRule, ChildNode, Plugin, Processor, Rule } from 'postcss'
 
+function round(mode: RoundingMode) {
+  switch (mode) {
+    case RoundingMode.Round:
+      return Math.round
+    case RoundingMode.Floor:
+      return Math.floor
+    case RoundingMode.Ceil:
+      return Math.ceil
+    default:
+      return (value: number) => value
+  }
+}
+
 function processProportionalRule(
   rule: Rule,
   rootNodes: ChildNode[],
@@ -7,9 +20,13 @@ function processProportionalRule(
   lastIndex: number
 ) {
   let scale = 1
-  for (const node of rule.nodes)
+  let roundingMode = RoundingMode.None
+  for (const node of rule.nodes) {
     if (node.type === 'decl' && node.prop === 'scale')
       scale = Number(node.value)
+    else if (node.type === 'decl' && node.prop === 'rounding')
+      roundingMode = node.value as RoundingMode
+  }
 
   if (scale !== 1 && !isNaN(scale)) {
     let skipNode = false
@@ -25,7 +42,8 @@ function processProportionalRule(
             const value = node.value
             node.value = node.value.replaceAll(
               /((\d*\.)?\d+)px/g,
-              (value) => Number(value.slice(0, -2)) * scale + 'px'
+              (value) =>
+                round(roundingMode)(Number(value.slice(0, -2)) * scale) + 'px'
             )
             if (node.value === value) return false
             return true
@@ -131,3 +149,10 @@ const plugin: () => Plugin | Processor = () => {
 module.exports = plugin
 
 module.exports.postcss = true
+
+enum RoundingMode {
+  None = 'none',
+  Round = 'round',
+  Floor = 'floor',
+  Ceil = 'ceil',
+}

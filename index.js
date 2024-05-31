@@ -1,10 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+function round(mode) {
+    switch (mode) {
+        case RoundingMode.Round:
+            return Math.round;
+        case RoundingMode.Floor:
+            return Math.floor;
+        case RoundingMode.Ceil:
+            return Math.ceil;
+        default:
+            return (value) => value;
+    }
+}
 function processProportionalRule(rule, rootNodes, firstIndex, lastIndex) {
     let scale = 1;
-    for (const node of rule.nodes)
+    let roundingMode = RoundingMode.None;
+    for (const node of rule.nodes) {
         if (node.type === 'decl' && node.prop === 'scale')
             scale = Number(node.value);
+        else if (node.type === 'decl' && node.prop === 'rounding')
+            roundingMode = node.value;
+    }
     if (scale !== 1 && !isNaN(scale)) {
         let skipNode = false;
         for (let i = firstIndex; i < lastIndex; i++) {
@@ -15,7 +31,7 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex) {
                 nodeCloned.nodes = nodeCloned.nodes.filter((node) => {
                     if (node.type === 'decl' && !skip) {
                         const value = node.value;
-                        node.value = node.value.replaceAll(/((\d*\.)?\d+)px/g, (value) => Number(value.slice(0, -2)) * scale + 'px');
+                        node.value = node.value.replaceAll(/((\d*\.)?\d+)px/g, (value) => round(roundingMode)(Number(value.slice(0, -2)) * scale) + 'px');
                         if (node.value === value)
                             return false;
                         return true;
@@ -94,3 +110,10 @@ const plugin = () => {
 };
 module.exports = plugin;
 module.exports.postcss = true;
+var RoundingMode;
+(function (RoundingMode) {
+    RoundingMode["None"] = "none";
+    RoundingMode["Round"] = "round";
+    RoundingMode["Floor"] = "floor";
+    RoundingMode["Ceil"] = "ceil";
+})(RoundingMode || (RoundingMode = {}));
