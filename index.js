@@ -12,7 +12,7 @@ function round(mode) {
             return (value) => value;
     }
 }
-function processProportionalRule(rule, rootNodes, firstIndex, lastIndex) {
+function processProportionalRule(rule, rootNodes, firstIndex, lastIndex, nodesToRemove) {
     let scale = 1;
     let roundingMode = RoundingMode.None;
     for (const node of rule.nodes) {
@@ -29,7 +29,13 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex) {
                 const nodeCloned = node.clone();
                 let skip = false;
                 nodeCloned.nodes = nodeCloned.nodes.filter((node) => {
-                    if (node.type === 'decl' && !skip) {
+                    if (node.type === 'decl' &&
+                        node.prop === 'proportional' &&
+                        node.value === 'skip') {
+                        skip = true;
+                        nodesToRemove.push(node);
+                    }
+                    else if (node.type === 'decl' && !skip) {
                         const value = node.value;
                         node.value = node.value.replaceAll(/((\d*\.)?\d+)px/g, (value) => round(roundingMode)(Number(value.slice(0, -2)) * scale) + 'px');
                         if (node.value === value)
@@ -63,6 +69,7 @@ const plugin = () => {
             const intervals = [];
             let firstIndex = 0;
             let firstIndexTmp = -1;
+            const nodesToRemove = [];
             for (let i = 0; i < rootNodes.length; i++) {
                 let node = rootNodes[i];
                 if (node.type === 'atrule')
@@ -78,7 +85,7 @@ const plugin = () => {
                         rootNodes[i].before(nodeCloned);
                         processProportionalRule((nodeCloned.type === 'atrule'
                             ? nodeCloned.nodes.findLast(({ selector }) => selector === 'proportional')
-                            : nodeCloned), rootNodes, firstIndex, interval);
+                            : nodeCloned), rootNodes, firstIndex, interval, nodesToRemove);
                         nodeCloned = node.clone();
                         const atrule = rootNodes[interval];
                         const newAtrule = new AtRule({
@@ -87,10 +94,10 @@ const plugin = () => {
                         });
                         newAtrule.append(nodeCloned);
                         rootNodes[i].before(newAtrule);
-                        processProportionalRule(nodeCloned, atrule.nodes, 0, atrule.nodes.length);
+                        processProportionalRule(nodeCloned, atrule.nodes, 0, atrule.nodes.length, nodesToRemove);
                         firstIndex = interval + 1;
                     }
-                    processProportionalRule(node, rootNodes, firstIndex, i);
+                    processProportionalRule(node, rootNodes, firstIndex, i, nodesToRemove);
                     if (rootNodes[i].type === 'atrule' &&
                         !rootNodes[i].nodes.length)
                         rootNodes[i].remove();
@@ -105,6 +112,8 @@ const plugin = () => {
                 else
                     firstIndexTmp = -1;
             }
+            for (const node of nodesToRemove)
+                node.remove();
         },
     };
 };

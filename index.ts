@@ -17,7 +17,8 @@ function processProportionalRule(
   rule: Rule,
   rootNodes: ChildNode[],
   firstIndex: number,
-  lastIndex: number
+  lastIndex: number,
+  nodesToRemove: ChildNode[]
 ) {
   let scale = 1
   let roundingMode = RoundingMode.None
@@ -38,7 +39,14 @@ function processProportionalRule(
 
         let skip = false
         nodeCloned.nodes = nodeCloned.nodes.filter((node) => {
-          if (node.type === 'decl' && !skip) {
+          if (
+            node.type === 'decl' &&
+            node.prop === 'proportional' &&
+            node.value === 'skip'
+          ) {
+            skip = true
+            nodesToRemove.push(node)
+          } else if (node.type === 'decl' && !skip) {
             const value = node.value
             node.value = node.value.replaceAll(
               /((\d*\.)?\d+)px/g,
@@ -80,6 +88,7 @@ const plugin: () => Plugin | Processor = () => {
 
       let firstIndex = 0
       let firstIndexTmp = -1
+      const nodesToRemove: ChildNode[] = []
       for (let i = 0; i < rootNodes.length; i++) {
         let node = rootNodes[i]
         if (node.type === 'atrule')
@@ -105,7 +114,8 @@ const plugin: () => Plugin | Processor = () => {
                 : nodeCloned) as typeof node,
               rootNodes,
               firstIndex,
-              interval
+              interval,
+              nodesToRemove
             )
 
             nodeCloned = node.clone()
@@ -120,12 +130,13 @@ const plugin: () => Plugin | Processor = () => {
               nodeCloned,
               atrule.nodes,
               0,
-              atrule.nodes.length
+              atrule.nodes.length,
+              nodesToRemove
             )
             firstIndex = interval + 1
           }
 
-          processProportionalRule(node, rootNodes, firstIndex, i)
+          processProportionalRule(node, rootNodes, firstIndex, i, nodesToRemove)
           if (
             rootNodes[i].type === 'atrule' &&
             !(rootNodes[i] as AtRule).nodes.length
@@ -142,6 +153,7 @@ const plugin: () => Plugin | Processor = () => {
           intervals.push(i)
         } else firstIndexTmp = -1
       }
+      for (const node of nodesToRemove) node.remove()
     },
   }
 }
