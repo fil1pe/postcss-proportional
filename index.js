@@ -28,12 +28,13 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex, nodesTo
             if (node.type === 'rule' && !skipNode) {
                 const nodeCloned = node.clone();
                 let skip = false;
-                nodeCloned.nodes = nodeCloned.nodes.filter((node) => {
+                const nodeIndexesToRemove = [];
+                nodeCloned.nodes = nodeCloned.nodes.filter((node, index) => {
                     if (node.type === 'decl' &&
                         node.prop === 'proportional' &&
                         node.value === 'skip') {
                         skip = true;
-                        nodesToRemove.push(node);
+                        nodeIndexesToRemove.push(index);
                     }
                     else if (node.type === 'decl' && !skip) {
                         const value = node.value;
@@ -49,6 +50,7 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex, nodesTo
                         skip = false;
                     return false;
                 });
+                nodeIndexesToRemove.forEach((index) => nodesToRemove.push(node.nodes[index]));
                 if (nodeCloned.nodes.length)
                     rule.before(nodeCloned);
             }
