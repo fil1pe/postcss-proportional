@@ -28,6 +28,7 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex, nodesTo
             if (node.type === 'rule' && !skipNode) {
                 const nodeCloned = node.clone();
                 let skip = false;
+                let currRoundingMode = roundingMode;
                 const nodeIndexesToRemove = [];
                 nodeCloned.nodes = nodeCloned.nodes.filter((node, index) => {
                     if (node.type === 'decl' &&
@@ -36,10 +37,23 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex, nodesTo
                         skip = true;
                         nodeIndexesToRemove.push(index);
                     }
+                    else if (node.type === 'decl' &&
+                        node.prop === 'proportional' &&
+                        node.value === 'keep') {
+                        skip = 'keep';
+                        nodeIndexesToRemove.push(index);
+                    }
+                    else if (node.type === 'decl' &&
+                        node.prop === 'proportional' &&
+                        node.value.startsWith('rounding-')) {
+                        currRoundingMode = node.value.slice(9);
+                    }
                     else if (node.type === 'decl' && !skip) {
                         const value = node.value;
-                        node.value = node.value.replaceAll(/((\d*\.)?\d+)px/g, (value) => round(roundingMode)(Number(value.slice(0, -2)) * scale) + 'px');
-                        if (node.value === value)
+                        node.value = node.value.replaceAll(/((\d*\.)?\d+)px/g, (value) => round(currRoundingMode)(Number(value.slice(0, -2)) * scale) +
+                            'px');
+                        currRoundingMode = roundingMode;
+                        if (node.value === value && skip !== 'keep' && skipNode !== 'keep')
                             return false;
                         return true;
                     }
@@ -57,6 +71,9 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex, nodesTo
             else if (node.type === 'comment' &&
                 node.text.includes('@proportional-skip'))
                 skipNode = true;
+            else if (node.type === 'comment' &&
+                node.text.includes('@proportional-keep'))
+                skipNode = 'keep';
             else
                 skipNode = false;
         }
