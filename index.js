@@ -25,7 +25,7 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex, nodesTo
         let skipNode = false;
         for (let i = firstIndex; i < lastIndex; i++) {
             const node = rootNodes[i];
-            if (node.type === 'rule' && !skipNode) {
+            if (node.type === 'rule' && skipNode !== true) {
                 const nodeCloned = node.clone();
                 let skip = false;
                 let currRoundingMode = roundingMode;
@@ -47,19 +47,25 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex, nodesTo
                         node.prop === 'proportional' &&
                         node.value.startsWith('rounding-')) {
                         currRoundingMode = node.value.slice(9);
+                        nodeIndexesToRemove.push(index);
                     }
-                    else if (node.type === 'decl' && !skip) {
+                    else if (node.type === 'decl' && skip !== true) {
                         const value = node.value;
                         node.value = node.value.replaceAll(/((\d*\.)?\d+)px/g, (value) => round(currRoundingMode)(Number(value.slice(0, -2)) * scale) +
                             'px');
-                        currRoundingMode = roundingMode;
+                        let ret = true;
                         if (node.value === value && skip !== 'keep' && skipNode !== 'keep')
-                            return false;
-                        return true;
+                            ret = false;
+                        skip = false;
+                        currRoundingMode = roundingMode;
+                        return ret;
                     }
                     else if (node.type === 'comment' &&
                         node.text.includes('@proportional-skip'))
                         skip = true;
+                    else if (node.type === 'comment' &&
+                        node.text.includes('@proportional-keep'))
+                        skip = 'keep';
                     else
                         skip = false;
                     return false;
@@ -67,6 +73,7 @@ function processProportionalRule(rule, rootNodes, firstIndex, lastIndex, nodesTo
                 nodeIndexesToRemove.forEach((index) => nodesToRemove.push(node.nodes[index]));
                 if (nodeCloned.nodes.length)
                     rule.before(nodeCloned);
+                skipNode = false;
             }
             else if (node.type === 'comment' &&
                 node.text.includes('@proportional-skip'))

@@ -34,10 +34,10 @@ function processProportionalRule(
     for (let i = firstIndex; i < lastIndex; i++) {
       const node = rootNodes[i]
 
-      if (node.type === 'rule' && !skipNode) {
+      if (node.type === 'rule' && skipNode !== true) {
         const nodeCloned = node.clone()
 
-        let skip: typeof skipNode = false
+        let skip: boolean | 'keep' = false
         let currRoundingMode = roundingMode
         const nodeIndexesToRemove: number[] = []
         nodeCloned.nodes = nodeCloned.nodes.filter((node, index) => {
@@ -61,7 +61,8 @@ function processProportionalRule(
             node.value.startsWith('rounding-')
           ) {
             currRoundingMode = node.value.slice(9) as RoundingMode
-          } else if (node.type === 'decl' && !skip) {
+            nodeIndexesToRemove.push(index)
+          } else if (node.type === 'decl' && skip !== true) {
             const value = node.value
             node.value = node.value.replaceAll(
               /((\d*\.)?\d+)px/g,
@@ -69,15 +70,22 @@ function processProportionalRule(
                 round(currRoundingMode)(Number(value.slice(0, -2)) * scale) +
                 'px'
             )
-            currRoundingMode = roundingMode
+            let ret = true
             if (node.value === value && skip !== 'keep' && skipNode !== 'keep')
-              return false
-            return true
+              ret = false
+            skip = false
+            currRoundingMode = roundingMode
+            return ret
           } else if (
             node.type === 'comment' &&
             node.text.includes('@proportional-skip')
           )
             skip = true
+          else if (
+            node.type === 'comment' &&
+            node.text.includes('@proportional-keep')
+          )
+            skip = 'keep'
           else skip = false
           return false
         })
@@ -86,6 +94,7 @@ function processProportionalRule(
         )
 
         if (nodeCloned.nodes.length) rule.before(nodeCloned)
+        skipNode = false
       } else if (
         node.type === 'comment' &&
         node.text.includes('@proportional-skip')
