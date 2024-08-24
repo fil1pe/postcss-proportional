@@ -1,6 +1,6 @@
 {
   "name": "postcss-proportional",
-  "version": "0.5.1",
+  "version": "1.0.0",
   "description": "PostCSS plugin to make layouts responsively proportional",
   "keywords": [
     "postcss",
